@@ -106,6 +106,7 @@ while [[ $# -gt 0 ]]; do
       echo "  ./install.sh                                    # Install all pillars"
       echo "  ./install.sh --dry-run                          # Preview all actions"
       echo "  ./install.sh --pillar knowledge                 # Install only Knowledge pillar"
+      echo "  ./install.sh --vault-path ~/my-notes            # Use existing Obsidian vault"
       echo "  ./install.sh --pillar knowledge --repo-name my-brain  # Custom repo name"
       exit 0
       ;;
