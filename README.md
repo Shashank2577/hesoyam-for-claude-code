@@ -34,7 +34,7 @@
 </p>
 
 <p align="center">
-  <a href="#-the-five-pillars">Pillars</a> · <a href="#-quick-start">Quick Start</a> · <a href="#️-pillar-i--orchestration">Orchestration</a> · <a href="#️-pillar-ii--configuration--security">Config</a> · <a href="#-pillar-iii--memory--persistence">Memory</a> · <a href="#-pillar-iv--knowledge--second-brain">Knowledge</a> · <a href="#-pillar-v--discovery--ecosystem">Discovery</a> · <a href="#-contributing">Contributing</a>
+  <a href="#-the-five-cheats">The Cheats</a> · <a href="#-quick-start">Quick Start</a> · <a href="#-pillar-i--orchestration-the-250k">The $250K</a> · <a href="#️-pillar-ii--configuration--security-the-armor">The Armor</a> · <a href="#️-pillar-iii--memory--persistence-the-health-bar">The Health Bar</a> · <a href="#-pillar-iv--knowledge--second-brain-the-safe-house">The Safe House</a> · <a href="#️-pillar-v--discovery--ecosystem-the-map">The Map</a> · <a href="#-contributing">Contributing</a>
 </p>
 
 > **🛤️ Don't need all five pillars?** Read **[Pick Your Path](guides/pick-your-path.md)** to find the right setup for you — from minimal (Claude Code only, 15 min) to full stack (everything, 45 min). **Obsidian is optional.** Every path works without it.
@@ -64,22 +64,6 @@ This isn't a fork. It's a **cheat code**.
 <p align="center">
   <img src="assets/hud-overlay.svg" alt="HESOYAM HUD — Player Status" width="560"/>
 </p>
-
-### 🕹️ GTA Symbols — Every Element Has a Meaning
-
-| GTA Element | Repo Mapping | Icon |
-|---|---|---|
-| **Health bar** (red) | claude-mem / persistent memory | ❤️ |
-| **Armor bar** (blue) | ECC security hooks, AgentShield | 🛡️ |
-| **Money counter** ($) | Productivity gains, token savings | 💲 |
-| **Wanted stars** | Setup complexity / difficulty level | ⭐ |
-| **Cheat input flash** | The `./install.sh` moment | ✅ |
-| **CJ on bicycle** | Before HESOYAM (grinding) | 🚲 |
-| **CJ in Hydra jet** | After HESOYAM (powered up) | ✈️ |
-| **Spray can** | Customization / your own config | 🎨 |
-| **Respect meter** | GitHub stars / community growth | 📊 |
-| **Save disk** | Vault auto-sync (the floppy icon) | 💾 |
-| **Two Player** | Contributing / open source collab | 👥 |
 
 > **Important:** HESOYAM is a **bootstrap kit and reference architecture** — it coordinates installation and configuration of best-in-class upstream projects. The agents, skills, and orchestration features come from those upstream projects (oh-my-claudecode, everything-claude-code, claude-mem, etc.). HESOYAM itself provides: the unified installer, 4 integration skills, 6 playbooks, 8 stack configs, 11 guides, an Obsidian vault template, and the glue that makes everything work together.
 
@@ -323,13 +307,13 @@ graph LR
 
 ## 🎰 The Five Cheats
 
-| Pillar | Problem | Solution | Powered By |
-|--------|---------|----------|------------|
-| **⚔️ Orchestration** | Claude Code is single-agent by default | Multi-agent parallel execution, autonomous loops, interview-first planning | [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) |
-| **🛡️ Configuration & Security** | No guardrails, no standards, no cross-tool portability | 28 agents, 125 skills, hooks, security scanning, AGENTS.md convention | [everything-claude-code](https://github.com/affaan-m/everything-claude-code) |
-| **🧠 Memory & Persistence** | 200K context window, zero memory between sessions | Auto-capture, AI compression, semantic search, session continuity | [claude-mem](https://github.com/thedotmack/claude-mem) + [claude-brain](https://github.com/memvid/claude-brain) |
-| **📚 Knowledge & Second Brain** | Context dies when the terminal closes | Obsidian vault as persistent PKB, NotebookLM integration, Granola meeting capture | [obsidian-skills](https://github.com/kepano/obsidian-skills) + [notebooklm-py](https://github.com/teng-lin/notebooklm-py) + [claudesidian](https://github.com/heyitsnoah/claudesidian) |
-| **🔭 Discovery & Ecosystem** | You don't know what you don't know | Curated catalog of 500+ tools, skills, agents, plugins, and workflows | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) + [awesome-notebooklm](https://github.com/etewiah/awesome-notebooklm) |
+| Pillar | The Problem | The Cheat | Powered By |
+|--------|-------------|-----------|------------|
+| ❤️ **Memory** — *The Health Bar* | 200K context window, zero memory between sessions | Auto-capture, AI compression, semantic search, session continuity — your health never drops | [claude-mem](https://github.com/thedotmack/claude-mem) + [claude-brain](https://github.com/memvid/claude-brain) |
+| 🛡️ **Security** — *The Armor* | No guardrails, no standards, no cross-tool portability | 28 agents, 125 skills, hooks, security scanning — nothing gets through | [everything-claude-code](https://github.com/affaan-m/everything-claude-code) |
+| 💲 **Orchestration** — *The $250K* | Claude Code is single-agent by default | Multi-agent parallel execution, autonomous loops — instant productivity | [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode) |
+| 💾 **Knowledge** — *The Safe House* | Context dies when the terminal closes | Obsidian vault as persistent second brain, auto-synced to GitHub — your progress is always saved | [obsidian-skills](https://github.com/kepano/obsidian-skills) + [notebooklm-py](https://github.com/teng-lin/notebooklm-py) + [claudesidian](https://github.com/heyitsnoah/claudesidian) |
+| 🗺️ **Discovery** — *The Map* | You don't know what you don't know | Curated catalog of 500+ tools, skills, agents, and plugins — the whole city revealed | [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code) + [awesome-notebooklm](https://github.com/etewiah/awesome-notebooklm) |
 
 ---
 
@@ -389,7 +373,7 @@ Read the pillar guides below. Take what serves you. Leave the rest. Come back wh
 
 ---
 
-## ⚔️ Pillar I — Orchestration
+## 💲 Pillar I — Orchestration (The $250K)
 
 ### The Engine: [oh-my-claudecode](https://github.com/Yeachan-Heo/oh-my-claudecode)
 
@@ -444,7 +428,7 @@ hesoyam/
 
 ---
 
-## 🛡️ Pillar II — Configuration & Security
+## 🛡️ Pillar II — Configuration & Security (The Armor)
 
 ### The Foundation: [everything-claude-code](https://github.com/affaan-m/everything-claude-code)
 
@@ -495,7 +479,7 @@ hesoyam/
 
 ---
 
-## 🧠 Pillar III — Memory & Persistence
+## ❤️ Pillar III — Memory & Persistence (The Health Bar)
 
 > *"200K context window. Zero memory between sessions. You're paying for a goldfish with a PhD."*
 
@@ -539,7 +523,7 @@ One file. Sub-millisecond search. Native Rust core. Grows ~1KB per memory. A yea
 
 ---
 
-## 📚 Pillar IV — Knowledge & Second Brain
+## 💾 Pillar IV — Knowledge & Second Brain (The Safe House)
 
 ### The Vault: Obsidian + Claude Code
 
@@ -640,7 +624,7 @@ See the full **[Git-Backed Obsidian Workflow](guides/obsidian-git-workflow.md)**
 
 ---
 
-## 🔭 Pillar V — Discovery & Ecosystem
+## 🗺️ Pillar V — Discovery & Ecosystem (The Map)
 
 ### The Map: [awesome-claude-code](https://github.com/hesreallyhim/awesome-claude-code)
 
