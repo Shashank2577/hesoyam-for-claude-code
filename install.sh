@@ -90,7 +90,7 @@ while [[ $# -gt 0 ]]; do
   case $1 in
     --pillar)     PILLAR="$2"; shift 2 ;;
     --dry-run)    DRY_RUN=true; shift ;;
-    --vault-path) VAULT_PATH="$2"; shift 2 ;;
+    --vault-path) VAULT_PATH="$(cd "$(dirname "$2")" 2>/dev/null && pwd)/$(basename "$2")"; shift 2 ;;
     --repo-name)  REPO_NAME="$2"; shift 2 ;;
     -h|--help)
       echo "Usage: ./install.sh [OPTIONS]"
@@ -259,8 +259,15 @@ install_knowledge() {
       echo -e "  ${BOLD}Obsidian vault path:${NC} [${VAULT_PATH}]"
       read -r -p "  Press Enter to accept, or type your vault path: " user_vault_path
       if [[ -n "$user_vault_path" ]]; then
-        # Expand ~ to $HOME
-        VAULT_PATH="${user_vault_path/#\~/$HOME}"
+        # Expand ~ and resolve to absolute path
+        user_vault_path="${user_vault_path/#\~/$HOME}"
+        if [[ -d "$user_vault_path" ]]; then
+          VAULT_PATH="$(cd "$user_vault_path" && pwd)"
+        elif [[ -d "$(dirname "$user_vault_path")" ]]; then
+          VAULT_PATH="$(cd "$(dirname "$user_vault_path")" && pwd)/$(basename "$user_vault_path")"
+        else
+          VAULT_PATH="$user_vault_path"
+        fi
       fi
       echo ""
     fi
@@ -336,45 +343,50 @@ GITIGNORE
       ok "Git already initialized."
     fi
 
-    # Check if repo exists on GitHub
-    if gh repo view "$REPO_NAME" &>/dev/null; then
-      warn "GitHub repo '${REPO_NAME}' already exists."
-      # Ensure remote is set
-      if ! git remote get-url origin &>/dev/null; then
-        local repo_url
-        repo_url=$(gh repo view "$REPO_NAME" --json url -q '.url')
-        git remote add origin "$repo_url"
-        ok "Set remote origin to: $repo_url"
+    # GitHub remote setup (requires gh auth)
+    if gh auth status &>/dev/null; then
+      if gh repo view "$REPO_NAME" &>/dev/null; then
+        ok "GitHub repo '${REPO_NAME}' already exists."
+        # Ensure remote is set
+        if ! git remote get-url origin &>/dev/null; then
+          local repo_url
+          repo_url=$(gh repo view "$REPO_NAME" --json url -q '.url')
+          git remote add origin "$repo_url"
+          ok "Set remote origin to: $repo_url"
+        else
+          ok "Remote origin already configured."
+        fi
       else
-        ok "Remote origin already configured."
-      fi
-    else
-      info "Creating private GitHub repo: ${REPO_NAME}"
-      git add -A
-      git commit -m "vault: HESOYAM initial setup — PARA structure, templates, .gitignore
+        info "Creating private GitHub repo: ${REPO_NAME}"
+        git add -A
+        git commit -m "vault: HESOYAM initial setup — PARA structure, templates, .gitignore
 
 Initialized Obsidian vault with:
 - PARA folders: Inbox, Projects, Areas, Resources, Archive
 - Templates: decision-record, debug-journal, daily-note, meeting-notes
 - Git-backed auto-sync via Claude Code PostToolUse hook
 - Ready for Obsidian desktop/mobile" --allow-empty
-      gh repo create "$REPO_NAME" --private --source=. --push
-      ok "Created and pushed to: github.com/$(gh api user -q '.login')/${REPO_NAME}"
-    fi
-
-    # Ensure initial commit exists and is pushed
-    if [[ -z "$(git log --oneline -1 2>/dev/null)" ]]; then
-      git add -A
-      git commit -m "vault: HESOYAM initial setup — PARA structure, templates, .gitignore"
-      git push -u origin main
-      ok "Initial commit pushed."
-    else
-      # Push if there are unpushed commits
-      if ! git diff --quiet origin/main HEAD 2>/dev/null; then
-        git add -A
-        git diff --cached --quiet || git commit -m "vault: template update"
-        git push -u origin main 2>/dev/null || true
+        gh repo create "$REPO_NAME" --private --source=. --push
+        ok "Created and pushed to: github.com/$(gh api user -q '.login')/${REPO_NAME}"
       fi
+
+      # Ensure initial commit exists and is pushed
+      if [[ -z "$(git log --oneline -1 2>/dev/null)" ]]; then
+        git add -A
+        git commit -m "vault: HESOYAM initial setup — PARA structure, templates, .gitignore"
+        git push -u origin main
+        ok "Initial commit pushed."
+      else
+        # Push if there are unpushed commits
+        if ! git diff --quiet origin/main HEAD 2>/dev/null; then
+          git add -A
+          git diff --cached --quiet || git commit -m "vault: template update"
+          git push -u origin main 2>/dev/null || true
+        fi
+      fi
+    else
+      warn "GitHub CLI not authenticated — skipping remote repo setup."
+      warn "Vault will work locally. Run 'gh auth login' then re-run for sync."
     fi
 
     cd "$SCRIPT_DIR"
