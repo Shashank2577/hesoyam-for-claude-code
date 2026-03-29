@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 280">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0a0a"/>
+      <stop offset="100%" style="stop-color:#1a1a2e"/>
+    </linearGradient>
+    <linearGradient id="greenGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#00ff41;stop-opacity:0"/>
+      <stop offset="15%" style="stop-color:#00ff41;stop-opacity:0.3"/>
+      <stop offset="50%" style="stop-color:#00ff41;stop-opacity:0.6"/>
+      <stop offset="85%" style="stop-color:#00ff41;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#00ff41;stop-opacity:0"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="strongGlow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="280" fill="url(#bg)" rx="12"/>
+
+  <!-- Scan lines effect -->
+  <pattern id="scanlines" width="4" height="4" patternUnits="userSpaceOnUse">
+    <rect width="4" height="2" fill="rgba(255,255,255,0.02)"/>
+  </pattern>
+  <rect width="800" height="280" fill="url(#scanlines)" rx="12"/>
+
+  <!-- Green flash bar -->
+  <rect x="0" y="85" width="800" height="110" fill="url(#greenGlow)" opacity="0.15"/>
+
+  <!-- Border glow -->
+  <rect x="2" y="2" width="796" height="276" fill="none" stroke="#00ff41" stroke-width="1" rx="11" opacity="0.3"/>
+
+  <!-- Checkmark -->
+  <g transform="translate(200, 115)" filter="url(#strongGlow)">
+    <text font-family="Arial, Helvetica, sans-serif" font-size="42" fill="#00ff41" font-weight="bold" text-anchor="middle">&#10003;</text>
+  </g>
+
+  <!-- CHEAT ACTIVATED text -->
+  <text x="400" y="128" font-family="'Impact', 'Arial Black', sans-serif" font-size="38" fill="#00ff41" text-anchor="middle" letter-spacing="8" filter="url(#strongGlow)">CHEAT ACTIVATED</text>
+
+  <!-- HESOYAM -->
+  <text x="400" y="172" font-family="'Impact', 'Arial Black', sans-serif" font-size="52" fill="#ffffff" text-anchor="middle" letter-spacing="12" filter="url(#glow)">HESOYAM</text>
+
+  <!-- Subtitle -->
+  <text x="400" y="210" font-family="'Courier New', monospace" font-size="16" fill="#00ff41" text-anchor="middle" opacity="0.8">Health + Armor + $250,000 &#8212; for Claude Code</text>
+
+  <!-- Bottom tagline -->
+  <text x="400" y="250" font-family="'Courier New', monospace" font-size="12" fill="#666666" text-anchor="middle">One install, and you get everything.</text>
+</svg>

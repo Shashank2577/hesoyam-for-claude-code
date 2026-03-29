@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 500">
+  <defs>
+    <linearGradient id="sheetBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#fdf6e3"/>
+      <stop offset="100%" style="stop-color:#f5e6c8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Paper background -->
+  <rect width="740" height="500" fill="url(#sheetBg)" rx="4"/>
+
+  <!-- Torn/worn edges effect -->
+  <rect x="3" y="3" width="734" height="494" fill="none" stroke="#d4c5a0" stroke-width="2" rx="3" stroke-dasharray="4,2"/>
+
+  <!-- Coffee stain (top right) -->
+  <circle cx="650" cy="60" r="35" fill="#c8a882" opacity="0.15"/>
+  <circle cx="650" cy="60" r="30" fill="url(#sheetBg)"/>
+
+  <!-- Title -->
+  <text x="370" y="48" font-family="'Impact', 'Arial Black', sans-serif" font-size="28" fill="#2c2c2c" text-anchor="middle" letter-spacing="4">GTA: CLAUDE CODE</text>
+  <text x="370" y="70" font-family="'Courier New', monospace" font-size="13" fill="#8b7355" text-anchor="middle">--- CHEAT SHEET ---</text>
+
+  <!-- Horizontal rule -->
+  <line x1="40" y1="85" x2="700" y2="85" stroke="#c8a882" stroke-width="1.5"/>
+
+  <!-- HESOYAM -->
+  <text x="50" y="120" font-family="'Courier New', monospace" font-size="18" fill="#cc0000" font-weight="bold">HESOYAM</text>
+  <text x="260" y="120" font-family="'Courier New', monospace" font-size="14" fill="#555">............</text>
+  <text x="400" y="120" font-family="'Courier New', monospace" font-size="14" fill="#2c2c2c">Full Setup (Health + Armor + $250K)</text>
+  <text x="50" y="140" font-family="'Courier New', monospace" font-size="11" fill="#8b7355">./install.sh</text>
+
+  <!-- BAGUVIX -->
+  <text x="50" y="175" font-family="'Courier New', monospace" font-size="18" fill="#cc0000" font-weight="bold">BAGUVIX</text>
+  <text x="260" y="175" font-family="'Courier New', monospace" font-size="14" fill="#555">............</text>
+  <text x="400" y="175" font-family="'Courier New', monospace" font-size="14" fill="#2c2c2c">Infinite Knowledge (God Mode)</text>
+  <text x="50" y="195" font-family="'Courier New', monospace" font-size="11" fill="#8b7355">/promote-to-vault</text>
+
+  <!-- FULLCLIP -->
+  <text x="50" y="230" font-family="'Courier New', monospace" font-size="18" fill="#cc0000" font-weight="bold">FULLCLIP</text>
+  <text x="260" y="230" font-family="'Courier New', monospace" font-size="14" fill="#555">............</text>
+  <text x="400" y="230" font-family="'Courier New', monospace" font-size="14" fill="#2c2c2c">Unlimited Standup Ammo</text>
+  <text x="50" y="250" font-family="'Courier New', monospace" font-size="11" fill="#8b7355">/daily-standup</text>
+
+  <!-- ROCKETMAN -->
+  <text x="50" y="285" font-family="'Courier New', monospace" font-size="18" fill="#cc0000" font-weight="bold">ROCKETMAN</text>
+  <text x="260" y="285" font-family="'Courier New', monospace" font-size="14" fill="#555">............</text>
+  <text x="400" y="285" font-family="'Courier New', monospace" font-size="14" fill="#2c2c2c">Jetpack Research Mode</text>
+  <text x="50" y="305" font-family="'Courier New', monospace" font-size="11" fill="#8b7355">/research-sprint</text>
+
+  <!-- PROFESSIONALKILLER -->
+  <text x="50" y="340" font-family="'Courier New', monospace" font-size="18" fill="#cc0000" font-weight="bold">PROFESSIONALKILLER</text>
+  <text x="400" y="340" font-family="'Courier New', monospace" font-size="14" fill="#2c2c2c">Pro Ecosystem Scan</text>
+  <text x="50" y="360" font-family="'Courier New', monospace" font-size="11" fill="#8b7355">/ecosystem-check</text>
+
+  <!-- Bottom rule -->
+  <line x1="40" y1="385" x2="700" y2="385" stroke="#c8a882" stroke-width="1.5"/>
+
+  <!-- Wanted level guide -->
+  <text x="370" y="412" font-family="'Courier New', monospace" font-size="12" fill="#8b7355" text-anchor="middle">WANTED LEVEL = SETUP COMPLEXITY</text>
+
+  <text x="50" y="438" font-family="'Courier New', monospace" font-size="11" fill="#2c2c2c">&#9733;&#9734;&#9734;&#9734;&#9734; Script only (5m)</text>
+  <text x="260" y="438" font-family="'Courier New', monospace" font-size="11" fill="#2c2c2c">&#9733;&#9733;&#9734;&#9734;&#9734; +Vault (15m)</text>
+  <text x="450" y="438" font-family="'Courier New', monospace" font-size="11" fill="#2c2c2c">&#9733;&#9733;&#9733;&#9734;&#9734; +Mem (30m)</text>
+
+  <text x="50" y="460" font-family="'Courier New', monospace" font-size="11" fill="#2c2c2c">&#9733;&#9733;&#9733;&#9733;&#9734; +OMC (45m)</text>
+  <text x="260" y="460" font-family="'Courier New', monospace" font-size="11" fill="#2c2c2c">&#9733;&#9733;&#9733;&#9733;&#9733; Full arsenal (1h)</text>
+
+  <!-- Handwritten note -->
+  <text x="510" y="68" font-family="'Comic Sans MS', cursive, sans-serif" font-size="11" fill="#cc6633" transform="rotate(-8, 510, 68)" opacity="0.7">don't lose this!!</text>
+
+  <!-- Bottom scribble -->
+  <text x="370" y="488" font-family="'Comic Sans MS', cursive, sans-serif" font-size="10" fill="#999" text-anchor="middle" opacity="0.5">~ taped to monitor since 2004 ~</text>
+</svg>

@@ -1,0 +1,30 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Node
+node_modules/
+package-lock.json
+
+# Python
+__pycache__/
+*.pyc
+.env
+
+# Claude Code local
+.claude-mem/
+*.mv2
+.claude/settings.local.json
+
+# OMC runtime state
+.omc/
+
+# Large media files (upload as GitHub release assets instead)
+*.mov
+*.mp4

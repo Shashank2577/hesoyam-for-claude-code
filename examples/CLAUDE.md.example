@@ -1,0 +1,184 @@
+# Example CLAUDE.md — Full HESOYAM Stack
+
+> This is a complete, real-world CLAUDE.md showing all five pillars working together.
+> Copy this into your project root and customize.
+
+---
+
+# Project: Meridian — Team Collaboration Platform
+
+## Stack
+- Next.js 15 (App Router) + TypeScript (strict)
+- Tailwind CSS v4 + Radix UI primitives
+- tRPC for type-safe API layer
+- PostgreSQL via Prisma ORM
+- Redis for caching + Pub/Sub
+- Resend for transactional email
+- Stripe for billing
+- Vercel for deployment
+
+## Architecture Rules
+- Server Components by default. Client Components only for interactivity (`'use client'`).
+- Server Actions for mutations. No API routes for internal CRUD.
+- tRPC for complex queries that need caching or pagination.
+- Zod schemas shared between client and server — single source of truth.
+- All money amounts as integers (cents). Display with `Intl.NumberFormat`.
+
+## Code Conventions
+- Named exports only (except pages/layouts)
+- Path aliases: `@/` maps to `src/`
+- Feature-based folder structure under `src/features/`
+- Barrel exports via `index.ts` per feature
+- No `any` type. No `as` type assertions (use type guards instead).
+- Error boundaries at feature boundaries, not every component.
+
+## File Structure
+```
+src/
+├── app/                    # Next.js App Router (pages, layouts)
+├── features/
+│   ├── auth/               # Authentication
+│   ├── workspaces/         # Multi-tenant workspaces
+│   ├── channels/           # Real-time messaging
+│   ├── billing/            # Stripe integration
+│   └── notifications/      # In-app + email notifications
+├── components/
+│   ├── ui/                 # Radix UI wrapper components
+│   └── shared/             # Cross-feature components
+├── lib/                    # Utilities, clients, configs
+├── server/                 # tRPC routers, server-only logic
+└── styles/                 # Global Tailwind config
+```
+
+## Testing
+- Vitest for unit tests (co-located: `*.test.ts`)
+- Playwright for E2E (in `e2e/`)
+- MSW for API mocking
+- Coverage target: 80% on business logic, skip UI snapshot tests
+
+## Commands
+```
+pnpm dev              # Start dev server
+pnpm build            # Production build
+pnpm test             # Run Vitest
+pnpm test:e2e         # Run Playwright
+pnpm db:migrate       # Prisma migrate dev
+pnpm db:studio        # Prisma Studio
+pnpm lint             # ESLint + TypeScript check
+pnpm stripe:listen    # Forward Stripe webhooks locally
+```
+
+## Security
+- All Stripe webhooks verified via signature. Idempotency keys on all mutations.
+- Row-Level Security mindset: every DB query scoped to workspace. No global queries.
+- CSRF protection via SameSite cookies + Origin header validation.
+- Rate limiting on auth endpoints (5 attempts / 15 min).
+- Secrets in environment variables only. Never in code, never in CLAUDE.md.
+
+---
+
+# HESOYAM Configuration
+
+## Pillar I: Orchestration (oh-my-claudecode)
+
+### Default Mode
+Ralph Mode for most work. Deep Interview before any feature touching billing or auth.
+
+### Execution Preferences
+```
+- Autopilot: Bug fixes, simple CRUD features
+- Deep Interview: Auth flows, billing, data migrations
+- Team Mode: Cross-cutting refactors (e.g., changing the auth model)
+- Ecomode: Long research sessions, documentation updates
+```
+
+### Stop Callbacks
+Notify on Slack (#eng-claude-notifications) when any session exceeds 30 minutes.
+
+## Pillar II: Configuration (everything-claude-code)
+
+### Installed Agents
+```
+agents/
+├── code-reviewer.md         # TypeScript + React patterns
+├── security-reviewer.md     # OWASP + Stripe-specific checks
+├── architect.md             # App Router architecture decisions
+├── tdd-guide.md             # Vitest-first workflow
+└── e2e-runner.md            # Playwright execution
+```
+
+### Hooks
+```json
+{
+  "PreToolUse": [
+    {
+      "matcher": "Bash",
+      "hook": "block-no-verify"
+    },
+    {
+      "matcher": "Bash",
+      "hooks": [{ "type": "command", "command": "detect-secrets" }]
+    },
+    {
+      "matcher": "Write|Edit",
+      "hooks": [{ "type": "command", "command": "check-no-any-type" }]
+    }
+  ],
+  "PostToolUse": [
+    {
+      "matcher": "Write|Edit",
+      "hooks": [{ "type": "command", "command": "auto-lint" }]
+    }
+  ]
+}
+```
+
+### Token Budget
+- Max MCPs active: 6 (GitHub, Prisma, Stripe, Resend, Slack, Vercel)
+- Max agents loaded: 5
+- Manual compact at ~120K tokens used
+- Subagents for any exploration task > 3 queries
+
+## Pillar III: Memory (claude-mem)
+
+### Signal Keywords
+```json
+["decided", "architecture", "auth", "billing", "migration",
+ "security", "performance", "stripe", "bug", "tradeoff"]
+```
+
+### Weekly Promotion
+Every Friday: `/promote-to-vault` — extract decisions and debug journals to Obsidian.
+
+## Pillar IV: Knowledge (Obsidian)
+
+### Vault Location
+`~/vaults/meridian/`
+
+### Key Vault Sections
+```
+01_Projects/meridian/        # Active sprint notes
+02_Areas/
+├── architecture/            # ADRs (ADR-001 through ADR-012)
+├── billing/                 # Stripe integration decisions
+└── security/                # Auth model, threat model
+03_Resources/
+├── debugging-journal/       # Past bugs and their root causes
+├── patterns/                # Reusable code patterns
+└── tech-decisions/          # Technology evaluations
+```
+
+### Obsidian Skills Enabled
+- Note search and creation
+- Daily note management
+- Decision record creation from session context
+
+## Pillar V: Discovery
+
+### Monthly Review
+First Monday of each month: scan awesome-claude-code for new skills relevant to our stack.
+
+### Tracked Catalogs
+- awesome-claude-code (main)
+- awesome-claude-code-subagents (for new agent patterns)
+- awesome-claude-skills (for Composio integrations)
