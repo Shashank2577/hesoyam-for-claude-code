@@ -81,7 +81,7 @@ run_cmd() {
   if $DRY_RUN; then
     dry "$*"
   else
-    "$@"
+    eval "$@"
   fi
 }
 
