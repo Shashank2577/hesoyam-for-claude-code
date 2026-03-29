@@ -252,22 +252,36 @@ install_knowledge() {
   info "━━━ 💾  Pillar IV: Knowledge & Second Brain — The Safe House ━━━"
   echo ""
 
-  # ── Step 1: Prompt for repo name ──────────────────────────────────────────
+  # ── Step 1: Vault path + repo name (interactive if not provided via flags) ─
   if ! $DRY_RUN; then
-    echo -e "  ${BOLD}Vault GitHub repo name:${NC} [${REPO_NAME}]"
-    read -r -p "  Press Enter to accept, or type a new name: " user_repo_name
-    if [[ -n "$user_repo_name" ]]; then
-      REPO_NAME="$user_repo_name"
+    # Ask for vault path if user didn't provide --vault-path
+    if [[ "$VAULT_PATH" == "${HOME}/Documents/obsidian-vault" ]]; then
+      echo -e "  ${BOLD}Obsidian vault path:${NC} [${VAULT_PATH}]"
+      read -r -p "  Press Enter to accept, or type your vault path: " user_vault_path
+      if [[ -n "$user_vault_path" ]]; then
+        # Expand ~ to $HOME
+        VAULT_PATH="${user_vault_path/#\~/$HOME}"
+      fi
+      echo ""
     fi
-    echo ""
+
+    # Only ask for repo name if vault doesn't already have git
+    if [[ ! -d "${VAULT_PATH}/.git" ]]; then
+      echo -e "  ${BOLD}Vault GitHub repo name:${NC} [${REPO_NAME}]"
+      read -r -p "  Press Enter to accept, or type a new name: " user_repo_name
+      if [[ -n "$user_repo_name" ]]; then
+        REPO_NAME="$user_repo_name"
+      fi
+      echo ""
+    else
+      ok "Vault already has git — skipping repo setup prompts."
+    fi
   fi
 
   # ── Step 2: Create vault from template ────────────────────────────────────
   info "Step 1/6: Creating vault at ${VAULT_PATH}"
   if [[ -d "$VAULT_PATH" ]]; then
-    warn "Vault directory already exists: $VAULT_PATH"
-    warn "Skipping template copy to avoid overwriting your data."
-    warn "To merge manually: cp -rn '${SCRIPT_DIR}/knowledge/obsidian-vault-template/'* '$VAULT_PATH/'"
+    ok "Using existing vault: $VAULT_PATH"
   else
     run_cmd "cp -r '${SCRIPT_DIR}/knowledge/obsidian-vault-template' '$VAULT_PATH'"
     ok "Vault created with PARA structure."
