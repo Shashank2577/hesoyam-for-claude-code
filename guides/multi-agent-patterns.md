@@ -41,7 +41,7 @@ You → oh-my-claudecode → Agent 1 (task A)
 **When:** Multiple independent tasks that don't share state. UI changes + API changes + database migrations happening simultaneously.
 
 ```bash
-/swarm
+/team
 
 > Tasks (all independent):
 > - Build the user settings UI component
@@ -139,4 +139,4 @@ Swarm is the most expensive but fastest. Single agent is cheapest but slowest. C
 
 - [oh-my-claudecode execution modes](https://github.com/Yeachan-Heo/oh-my-claudecode)
 - [ECC agent delegation patterns](https://github.com/affaan-m/everything-claude-code)
-- [Claude Code native Agent Teams](https://docs.claude.com)
+- [Claude Code native Agent Teams](https://docs.anthropic.com/en/docs/claude-code/overview)

@@ -53,14 +53,18 @@ Add a SessionStart hook that runs `/standup` automatically at the beginning of e
 
 ```json
 {
-  "SessionStart": [
-    {
-      "script": "auto-standup.sh",
-      "condition": "first_session_of_day"
-    }
-  ]
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [{ "type": "command", "command": "auto-standup.sh" }]
+      }
+    ]
+  }
 }
 ```
+
+> Note: `first_session_of_day` logic must be handled inside `auto-standup.sh` itself (e.g., check a timestamp file).
 
 ## Team Aggregation
 

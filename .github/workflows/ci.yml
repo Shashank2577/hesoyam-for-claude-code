@@ -46,7 +46,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run ShellCheck
-        uses: ludeeus/action-shellcheck@master
+        uses: ludeeus/action-shellcheck@v2.0.0
         with:
           scandir: '.'
           severity: warning
@@ -63,6 +63,7 @@ jobs:
           required_files=(
             "README.md"
             "CONTRIBUTING.md"
+            "CODE_OF_CONDUCT.md"
             "LICENSE"
             "COMPATIBILITY.md"
             "install.sh"
@@ -110,6 +111,11 @@ jobs:
             "knowledge/obsidian-vault-template/01_Projects"
             "knowledge/obsidian-vault-template/02_Areas"
             "knowledge/obsidian-vault-template/03_Resources"
+            "knowledge/obsidian-vault-template/03_Resources/debugging-journal"
+            "knowledge/obsidian-vault-template/03_Resources/ecosystem"
+            "knowledge/obsidian-vault-template/03_Resources/patterns"
+            "knowledge/obsidian-vault-template/03_Resources/research"
+            "knowledge/obsidian-vault-template/03_Resources/tech-decisions"
             "knowledge/obsidian-vault-template/04_Archive"
             "knowledge/obsidian-vault-template/05_Attachments"
             "knowledge/obsidian-vault-template/06_Templates"
@@ -139,3 +145,23 @@ jobs:
             exit 1
           fi
           echo "install.sh is executable."
+
+      - name: Smoke test install.sh --dry-run
+        run: |
+          # Full pillar sequence
+          ./install.sh --dry-run
+          echo "install.sh --dry-run (all pillars) exited cleanly."
+
+          # Individual pillar smoke tests
+          ./install.sh --dry-run --pillar orchestration
+          echo "install.sh --dry-run --pillar orchestration exited cleanly."
+
+          ./install.sh --dry-run --pillar memory
+          echo "install.sh --dry-run --pillar memory exited cleanly."
+
+          # Knowledge pillar with explicit vault-path exercises VAULT_PATH expansion logic
+          ./install.sh --dry-run --pillar knowledge --vault-path /tmp/test-vault
+          echo "install.sh --dry-run --pillar knowledge --vault-path exited cleanly."
+
+          ./install.sh --dry-run --pillar discovery
+          echo "install.sh --dry-run --pillar discovery exited cleanly."

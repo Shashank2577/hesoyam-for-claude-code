@@ -30,8 +30,8 @@ The community plugin auto-commits and pushes on a schedule.
    # git remote add origin git@github.com:YOUR_USER/obsidian-vault.git
    # git push -u origin main
    ```
-3. **Install the Obsidian Git plugin** via Community Plugins
-4. **Configure auto-commit:**
+2. **Install the Obsidian Git plugin** via Community Plugins
+3. **Configure auto-commit:**
    - Auto backup interval: 10 minutes
    - Commit message: `vault: auto-backup {{date}}`
    - Auto-pull on startup: enabled
@@ -65,7 +65,7 @@ Add a hook that auto-commits and pushes every time Claude Code writes to your va
         "hooks": [
           {
             "type": "command",
-            "command": "cd '~/Documents/obsidian-vault' && git add -A && git diff --cached --quiet || (git commit -m 'vault: auto-sync' && git push 2>/dev/null &)"
+            "command": "cd \"$HOME/Documents/obsidian-vault\" && git add -A && git diff --cached --quiet || (git commit -m 'vault: auto-sync' && git push 2>/dev/null &)"
           }
         ]
       }
@@ -87,8 +87,13 @@ If you prefer fewer commits (one per session instead of one per file write):
   "hooks": {
     "SessionEnd": [
       {
-        "type": "command",
-        "command": "cd ~/Documents/obsidian-vault && git add -A && git diff --cached --quiet || git commit -m 'session: auto-capture' && git push origin main"
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$HOME/Documents/obsidian-vault\" && git add -A && git diff --cached --quiet || (git commit -m 'session: auto-capture' && git push origin main)"
+          }
+        ]
       }
     ]
   }

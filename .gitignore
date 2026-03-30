@@ -15,7 +15,21 @@ package-lock.json
 # Python
 __pycache__/
 *.pyc
+
+# Environment / secrets
 .env
+.env.*
+.env.local
+.env.production
+.env.development
+*.key
+*.pem
+*.p12
+*.pfx
+*.token
+.netrc
+npm-debug.log*
+yarn-error.log
 
 # Claude Code local
 .claude-mem/

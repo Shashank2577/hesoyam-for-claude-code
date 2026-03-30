@@ -12,7 +12,7 @@
 | **Node.js** | 18.0+ | 22 LTS | Required for oh-my-claudecode and ECC |
 | **npm** | 9.0+ | 10+ | Comes with Node.js |
 | **Git** | 2.30+ | 2.40+ | Required for worktrees, vault sync |
-| **Python** | 3.10+ | 3.12+ | Only if using notebooklm-py or claude-mem |
+| **Python** | 3.10+ | 3.12+ | Only if using notebooklm-py (claude-mem is Node.js only) |
 | **OS** | macOS 13+ / Ubuntu 22.04+ / Windows 11 (WSL2) | macOS 14+ | Native Windows without WSL is not supported |
 
 ## Upstream Project Versions

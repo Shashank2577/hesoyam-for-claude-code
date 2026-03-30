@@ -7,6 +7,8 @@ description: Review recent claude-mem observations and promote high-signal ones 
 
 Review claude-mem observations from the last 7 days using the claude-mem MCP search tools.
 
+> **If claude-mem is not available:** Inform the user that claude-mem is required for this skill (`npm install -g claude-mem`), then exit gracefully. Do not attempt to proceed without a data source.
+
 For each observation, classify it:
 
 1. **Architecture decisions** — Save as a decision record in `$VAULT_PATH/03_Resources/tech-decisions/`

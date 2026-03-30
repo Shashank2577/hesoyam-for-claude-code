@@ -136,10 +136,10 @@ flowchart TB
 Your Claude Code setup:
 ├── .claude/
 │   └── skills/                    ← 4 HESOYAM skills installed
-│       ├── promote-to-vault.md
-│       ├── daily-standup.md
-│       ├── research-sprint.md
-│       └── ecosystem-check.md
+│       ├── promote-to-vault/SKILL.md
+│       ├── daily-standup/SKILL.md
+│       ├── research-sprint/SKILL.md
+│       └── ecosystem-check/SKILL.md
 ├── ~/Documents/obsidian-vault/    ← Empty PARA template
 │   ├── 00_Inbox/                  (empty)
 │   ├── 01_Projects/               (empty)
@@ -473,7 +473,7 @@ hesoyam/
 | **Instinct System** | Auto-extracts behavioral patterns from sessions into reusable rules. `/instinct-import` brings them into your config. |
 | **Continuous Learning Hooks** | Detects patterns during work and suggests new skills automatically. |
 | **ccg-workflow Runtime** | Required for `/multi-plan`, `/multi-execute`, `/multi-backend`, `/multi-frontend`. Initialize with `npx ccg-workflow`. |
-| **Shorthand + Longform Guides** | Start with the [Shorthand Guide](https://github.com/affaan-m/everything-claude-code) (setup), graduate to the [Longform Guide](https://x.com/affaanmustafa) (optimization). |
+| **Shorthand + Longform Guides** | Start with the [Shorthand Guide](https://github.com/affaan-m/everything-claude-code) (setup), graduate to the [Longform Guide](https://github.com/affaan-m/everything-claude-code) (optimization). |
 
 > ⚠️ **Common gotcha:** Do NOT add `"hooks"` to `.claude-plugin/plugin.json`. Claude Code v2.1+ auto-loads hooks. Declaring them causes "Duplicate hooks file" errors. See [troubleshooting](community/troubleshooting/common-issues.md).
 
@@ -519,7 +519,7 @@ One file. Sub-millisecond search. Native Rust core. Grows ~1KB per memory. A yea
 |------|-------------|
 | [claude-supermemory](https://github.com/supermemoryai/claude-supermemory) | Team memory shared across projects, cloud-backed |
 | [claude-memory-extractor](https://github.com/obra/claude-memory-extractor) | Multi-dimensional extraction: root cause analysis, psychological drivers, debugging patterns |
-| [Hindsight](https://github.com/search?q=hindsight+claude+code) | Memory layer for multi-agent setups |
+| Hindsight | Memory layer for multi-agent setups (no stable public repo yet) |
 
 ---
 

@@ -11,7 +11,7 @@ You have a PR that needs thorough review before merge — architecture complianc
 ### 1. Parallel Review Agents
 
 ```bash
-/swarm
+/team
 
 > Review PR #[number] with parallel agents:
 > - code-reviewer: Logic errors, edge cases, regression risks

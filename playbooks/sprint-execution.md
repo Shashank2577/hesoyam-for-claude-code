@@ -35,7 +35,7 @@ Save the plan to Obsidian: `01_Projects/sprint-XX/plan.md`
 > What did we accomplish yesterday? What's still pending?
 
 # Assign today's work
-/swarm
+/team
 
 > Today's tickets: [list independent tickets]
 > Agent 1: [Ticket A]

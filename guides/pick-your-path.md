@@ -14,7 +14,8 @@
 /plugin install everything-claude-code@everything-claude-code
 
 # 2. Install claude-brain for single-file memory
-/plugin add marketplace memvid/claude-brain
+/plugin marketplace add memvid/claude-brain
+/plugin install claude-brain@claude-brain
 
 # 3. Done. Use it:
 /plan "Build feature X"

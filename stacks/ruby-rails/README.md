@@ -86,16 +86,18 @@ app/
 
 ```json
 {
-  "PreToolUse": [
-    {
-      "matcher": "Bash",
-      "script": "block-force-push.sh"
-    },
-    {
-      "matcher": "Write|Edit",
-      "script": "warn-on-migration-change.sh"
-    }
-  ]
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "block-force-push.sh" }]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [{ "type": "command", "command": "warn-on-migration-change.sh" }]
+      }
+    ]
+  }
 }
 ```
 

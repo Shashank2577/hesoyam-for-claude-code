@@ -7,10 +7,11 @@ description: Auto-generate a daily standup from claude-mem session history and O
 
 Generate a concise daily standup report by pulling from two sources:
 
-**Source 1: claude-mem (automatic)**
+**Source 1: claude-mem (if available)**
 - Search for observations from the last 24 hours
 - Extract: files modified, features worked on, bugs fixed, PRs created, tests written
 - Group by project/feature
+- If claude-mem MCP tools are unavailable, skip this source and note "claude-mem not available" in the output
 
 **Source 2: Obsidian daily note (if available)**
 - Check `$VAULT_PATH/00_Inbox/` and `$VAULT_PATH/01_Projects/` for today's and yesterday's notes

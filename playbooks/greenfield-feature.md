@@ -64,7 +64,7 @@ For **mixed workloads** (some parallel, some sequential):
 
 ```bash
 # Swarm: Coordinated agents with shared task list
-/swarm
+/team
 ```
 
 ## Phase 4: Validate (ECC Quality Gates)

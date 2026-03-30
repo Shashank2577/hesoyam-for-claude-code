@@ -24,8 +24,13 @@ If you accidentally paste an API key into a prompt, the hook stops it before it 
 
 ```json
 {
-  "PreToolUse": {
-    "Bash": "block-no-verify.sh"
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "block-no-verify.sh" }]
+      }
+    ]
   }
 }
 ```
@@ -156,4 +161,4 @@ Before deploying or merging:
 - [ECC AgentShield](https://github.com/affaan-m/everything-claude-code)
 - [ECC OpenClaw Security Guide](https://github.com/affaan-m/everything-claude-code/blob/main/the-openclaw-guide.md)
 - [Claude Code Safety Net Plugin](https://github.com/kenryu42/claude-code-safety-net)
-- [Anthropic Claude Code Security Docs](https://docs.claude.com)
+- [Anthropic Claude Code Security Docs](https://docs.anthropic.com/en/docs/claude-code/overview)

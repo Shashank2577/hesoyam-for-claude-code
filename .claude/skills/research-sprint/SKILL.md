@@ -21,7 +21,7 @@ Search across multiple dimensions:
 4. Real-world production experience (blog posts, conference talks, post-mortems)
 5. Failure modes and risks for each approach
 
-Save findings as structured markdown files in `./research/[topic]/`:
+Save findings as structured markdown files in `research/[topic]/` under the current project root:
 - `findings.md` — Raw research notes organized by dimension
 - `comparison-matrix.md` — Side-by-side comparison table
 - `recommendation.md` — Your recommended approach with rationale
@@ -29,14 +29,14 @@ Save findings as structured markdown files in `./research/[topic]/`:
 **Step 3: Synthesize.**
 Create a final deliverable based on the requested output format:
 
-- **ADR:** Use the template from `knowledge/templates/adr-template.md`. Save to the vault if Obsidian is configured.
+- **ADR:** Use the standard ADR format (Context, Options Considered, Decision, Rationale, Consequences). Save to the vault if Obsidian is configured.
 - **Comparison matrix:** Weighted scoring table with clear winner highlighted.
 - **Team briefing:** Executive summary (5 bullet points max) + detailed appendix.
 
 **Step 4: Capture.**
 - Save the research to Obsidian vault if configured (`$VAULT_PATH/03_Resources/research/[topic]/`)
 - Add frontmatter with type: research, topic, date, status, decision
-- Create claude-mem observation summarizing the decision
+- Create claude-mem observation summarizing the decision (skip if claude-mem is not installed)
 
 **Rules:**
 - Cite sources for every claim. "I think" is not a source.

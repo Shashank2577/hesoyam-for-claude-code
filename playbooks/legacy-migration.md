@@ -55,7 +55,7 @@ git worktree add ../migration-notifications feature/migrate-notifications
 ```
 
 ```bash
-/swarm
+/team
 
 > Assign agents to parallel migration tracks:
 > - Agent 1: Migrate auth module in worktree migration-auth

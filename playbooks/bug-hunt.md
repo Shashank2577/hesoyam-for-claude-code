@@ -39,7 +39,7 @@ If the root cause isn't obvious, run parallel investigations:
 /security-scan # Maybe it's a security-related edge case
 
 # Option B: Using oh-my-claudecode Swarm
-/swarm
+/team
 
 > Investigation tracks:
 > - Agent 1: Read git log for recent changes to affected files

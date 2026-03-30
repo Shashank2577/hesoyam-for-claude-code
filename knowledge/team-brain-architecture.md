@@ -47,7 +47,7 @@ Build it as a set of Claude Code slash commands + Obsidian vault:
 - `/team-onboard [person]` — Generate onboarding context from vault
 - `/team-handoff [project]` — Create handoff document from project memory
 
-### Option B: Daylight Core Feature (For productization)
+### Option B: Productized Work OS Feature
 
 Extract the shared services into a reusable Work OS layer:
 - Meeting transcription processing pipeline

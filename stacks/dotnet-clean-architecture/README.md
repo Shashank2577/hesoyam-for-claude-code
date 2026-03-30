@@ -73,15 +73,17 @@ Keep it lean. For a typical .NET project:
 
 ```json
 {
-  "PreToolUse": [
-    {
-      "matcher": "Write|Edit",
-      "script": "check-no-god-constants.sh"
-    },
-    {
-      "matcher": "Bash",
-      "script": "block-force-push.sh"
-    }
-  ]
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [{ "type": "command", "command": "check-no-god-constants.sh" }]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [{ "type": "command", "command": "block-force-push.sh" }]
+      }
+    ]
+  }
 }
 ```

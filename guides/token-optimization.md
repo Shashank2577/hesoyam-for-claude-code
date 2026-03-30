@@ -49,10 +49,10 @@ Instead of putting everything in CLAUDE.md (which loads every session), use CLI 
 
 ```bash
 # Only load auth context when working on auth
-claude --context auth-rules.md
+claude --append-system-prompt "$(cat auth-rules.md)"
 
 # Only load database patterns when doing migrations
-claude --context db-patterns.md
+claude --append-system-prompt "$(cat db-patterns.md)"
 ```
 
 ## Rule 5: Model Selection Matters

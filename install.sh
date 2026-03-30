@@ -47,11 +47,23 @@ play_cheat_sound() {
       # Linux (ALSA + ffmpeg convert)
       ffmpeg -i "$sound_file" -f wav - 2>/dev/null | aplay -q &>/dev/null &
     elif command -v powershell.exe &>/dev/null; then
-      # Windows (WSL/Git Bash) — use PowerShell media player
-      powershell.exe -NoProfile -Command "(New-Object Media.SoundPlayer '$(wslpath -w "$sound_file" 2>/dev/null || echo "$sound_file")').PlaySync()" &>/dev/null &
+      # Windows (WSL) — use WMPlayer.OCX COM object (works headless, supports MP3)
+      local win_path
+      win_path=$(wslpath -w "$sound_file" 2>/dev/null || echo "$sound_file")
+      powershell.exe -NoProfile -Command "
+        \$wmp = New-Object -ComObject WMPlayer.OCX
+        \$wmp.URL = '$win_path'
+        \$wmp.controls.play()
+        Start-Sleep -Seconds 5
+      " &>/dev/null &
     elif command -v powershell &>/dev/null; then
-      # Windows (native Git Bash/MSYS2)
-      powershell -NoProfile -Command "(New-Object Media.SoundPlayer '$sound_file').PlaySync()" &>/dev/null &
+      # Windows (native Git Bash/MSYS2) — same WMPlayer COM approach
+      powershell -NoProfile -Command "
+        \$wmp = New-Object -ComObject WMPlayer.OCX
+        \$wmp.URL = '$sound_file'
+        \$wmp.controls.play()
+        Start-Sleep -Seconds 5
+      " &>/dev/null &
     else
       # Universal fallback — terminal bell
       printf '\a'
@@ -88,10 +100,23 @@ run_cmd() {
 # ─── Argument Parsing ────────────────────────────────────────────────────────
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --pillar)     PILLAR="$2"; shift 2 ;;
+    --pillar)
+      [[ $# -ge 2 ]] || { err "--pillar requires an argument"; exit 1; }
+      PILLAR="$2"; shift 2 ;;
     --dry-run)    DRY_RUN=true; shift ;;
-    --vault-path) VAULT_PATH="$(cd "$(dirname "$2")" 2>/dev/null && pwd)/$(basename "$2")"; shift 2 ;;
-    --repo-name)  REPO_NAME="$2"; shift 2 ;;
+    --vault-path)
+      [[ $# -ge 2 ]] || { err "--vault-path requires an argument"; exit 1; }
+      _vp="${2/#\~/$HOME}"  # expand leading tilde
+      if [[ -d "$(dirname "$_vp")" ]]; then
+        VAULT_PATH="$(cd "$(dirname "$_vp")" && pwd)/$(basename "$_vp")"
+      else
+        VAULT_PATH="$_vp"
+      fi
+      unset _vp
+      shift 2 ;;
+    --repo-name)
+      [[ $# -ge 2 ]] || { err "--repo-name requires an argument"; exit 1; }
+      REPO_NAME="$2"; shift 2 ;;
     -h|--help)
       echo "Usage: ./install.sh [OPTIONS]"
       echo ""
@@ -114,6 +139,12 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# ─── nvm detection — source nvm so npm/node are in PATH for nvm users ────────
+if [[ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ]]; then
+  # shellcheck source=/dev/null
+  source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use 2>/dev/null || true
+fi
+
 # ─── Prerequisites ───────────────────────────────────────────────────────────
 check_prerequisites() {
   info "Checking prerequisites..."
@@ -123,7 +154,6 @@ check_prerequisites() {
   command -v node >/dev/null 2>&1   || missing+=("node (Node.js 18+) — https://nodejs.org/")
   command -v npm >/dev/null 2>&1    || missing+=("npm — comes with Node.js")
   command -v git >/dev/null 2>&1    || missing+=("git — https://git-scm.com/")
-  command -v gh >/dev/null 2>&1     || missing+=("gh (GitHub CLI) — https://cli.github.com/")
 
   if [[ ${#missing[@]} -gt 0 ]]; then
     err "Missing required tools:"
@@ -134,8 +164,11 @@ check_prerequisites() {
     exit 1
   fi
 
-  # Check gh auth (only warn — required for knowledge pillar, not others)
-  if ! gh auth status &>/dev/null; then
+  # Check gh availability (only warn — required for knowledge pillar, not others)
+  if ! command -v gh >/dev/null 2>&1; then
+    warn "GitHub CLI (gh) not found. Required for the Knowledge pillar (vault sync)."
+    warn "Install from https://cli.github.com/ then re-run for vault GitHub setup."
+  elif ! gh auth status &>/dev/null; then
     warn "GitHub CLI is not authenticated. Required for the Knowledge pillar (vault sync)."
     echo "  Run: gh auth login"
   fi
@@ -157,7 +190,7 @@ install_orchestration() {
     # Register the OMC marketplace if not already registered
     if ! claude plugin list 2>/dev/null | grep -q "oh-my-claudecode"; then
       info "Adding oh-my-claudecode marketplace..."
-      claude plugin marketplace add Yeachan-Heo/oh-my-claudecode 2>/dev/null || {
+      claude plugin add-marketplace omc --source github --repo Yeachan-Heo/oh-my-claudecode 2>/dev/null || {
         warn "Could not register OMC marketplace via plugin system."
         warn "Falling back to npm install..."
         run_cmd "npm install -g oh-my-claude-sisyphus"
@@ -191,7 +224,7 @@ install_orchestration() {
       warn "After install, run inside Claude Code: /oh-my-claudecode:omc-setup"
     fi
   else
-    dry "claude plugin marketplace add Yeachan-Heo/oh-my-claudecode"
+    dry "claude plugin add-marketplace omc --source github --repo Yeachan-Heo/oh-my-claudecode"
     dry "claude plugin install oh-my-claudecode@omc"
   fi
 
@@ -231,7 +264,15 @@ install_memory() {
   info "━━━ ❤️  Pillar III: Memory & Persistence — The Health Bar ━━━"
 
   info "Installing claude-mem..."
-  run_cmd "npm install -g claude-mem"
+  if ! $DRY_RUN; then
+    if ! npm install -g claude-mem 2>/dev/null; then
+      warn "npm install -g claude-mem failed (possibly EACCES)."
+      warn "Fix with: sudo npm install -g claude-mem"
+      warn "Or use a user-scoped prefix: npm config set prefix ~/.npm-global"
+    fi
+  else
+    dry "npm install -g claude-mem"
+  fi
 
   if ! $DRY_RUN; then
     if command -v claude-mem >/dev/null 2>&1; then
@@ -290,7 +331,12 @@ install_knowledge() {
   if [[ -d "$VAULT_PATH" ]]; then
     ok "Using existing vault: $VAULT_PATH"
   else
-    run_cmd "cp -r '${SCRIPT_DIR}/knowledge/obsidian-vault-template' '$VAULT_PATH'"
+    # Use direct cp (not run_cmd/eval) — VAULT_PATH is user-controlled and must not be eval'd
+    if ! $DRY_RUN; then
+      cp -r "${SCRIPT_DIR}/knowledge/obsidian-vault-template" "$VAULT_PATH"
+    else
+      dry "cp -r '${SCRIPT_DIR}/knowledge/obsidian-vault-template' '${VAULT_PATH}'"
+    fi
     ok "Vault created with PARA structure."
   fi
 
@@ -333,63 +379,60 @@ GITIGNORE
   info "Step 3/6: Setting up Git repo (${REPO_NAME})"
 
   if ! $DRY_RUN; then
-    cd "$VAULT_PATH"
+    # Use subshell so cd never leaks — parent cwd stays at SCRIPT_DIR
+    (
+      cd "$VAULT_PATH"
 
-    # Init git if not already
-    if [[ ! -d ".git" ]]; then
-      git init -b main
-      ok "Initialized git repository."
-    else
-      ok "Git already initialized."
-    fi
-
-    # GitHub remote setup (requires gh auth)
-    if gh auth status &>/dev/null; then
-      if gh repo view "$REPO_NAME" &>/dev/null; then
-        ok "GitHub repo '${REPO_NAME}' already exists."
-        # Ensure remote is set
-        if ! git remote get-url origin &>/dev/null; then
-          local repo_url
-          repo_url=$(gh repo view "$REPO_NAME" --json url -q '.url')
-          git remote add origin "$repo_url"
-          ok "Set remote origin to: $repo_url"
+      # Init git if not already
+      if [[ ! -d ".git" ]]; then
+        # -b flag requires git >= 2.28; fall back for older systems (e.g. Ubuntu 20.04)
+        if git init -b main 2>/dev/null; then
+          :
         else
-          ok "Remote origin already configured."
+          git init
+          git symbolic-ref HEAD refs/heads/main
         fi
+        ok "Initialized git repository."
       else
-        info "Creating private GitHub repo: ${REPO_NAME}"
-        git add -A
-        git commit -m "vault: HESOYAM initial setup — PARA structure, templates, .gitignore
+        ok "Git already initialized."
+      fi
+
+      # GitHub remote setup (requires gh auth)
+      if gh auth status &>/dev/null; then
+        local _gh_user
+        _gh_user=$(gh api user -q '.login' 2>/dev/null || echo "")
+        local _qualified_repo="${_gh_user:+${_gh_user}/}${REPO_NAME}"
+        if gh repo view "$_qualified_repo" &>/dev/null; then
+          ok "GitHub repo '${_qualified_repo}' already exists."
+          # Ensure remote is set
+          if ! git remote get-url origin &>/dev/null; then
+            repo_url=$(gh repo view "$_qualified_repo" --json url -q '.url')
+            git remote add origin "$repo_url"
+            ok "Set remote origin to: $repo_url"
+          else
+            ok "Remote origin already configured."
+          fi
+          # Push any local commits not yet on remote
+          GIT_TERMINAL_PROMPT=0 git push -u origin main 2>/dev/null || \
+            warn "Push failed — run 'git push -u origin main' manually after configuring credentials."
+        else
+          info "Creating private GitHub repo: ${REPO_NAME}"
+          git add -A
+          git commit -m "vault: HESOYAM initial setup — PARA structure, templates, .gitignore
 
 Initialized Obsidian vault with:
 - PARA folders: Inbox, Projects, Areas, Resources, Archive
 - Templates: decision-record, debug-journal, daily-note, meeting-notes
 - Git-backed auto-sync via Claude Code PostToolUse hook
 - Ready for Obsidian desktop/mobile" --allow-empty
-        gh repo create "$REPO_NAME" --private --source=. --push
-        ok "Created and pushed to: github.com/$(gh api user -q '.login')/${REPO_NAME}"
-      fi
-
-      # Ensure initial commit exists and is pushed
-      if [[ -z "$(git log --oneline -1 2>/dev/null)" ]]; then
-        git add -A
-        git commit -m "vault: HESOYAM initial setup — PARA structure, templates, .gitignore"
-        git push -u origin main
-        ok "Initial commit pushed."
-      else
-        # Push if there are unpushed commits
-        if ! git diff --quiet origin/main HEAD 2>/dev/null; then
-          git add -A
-          git diff --cached --quiet || git commit -m "vault: template update"
-          git push -u origin main 2>/dev/null || true
+          gh repo create "$REPO_NAME" --private --source=. --push
+          ok "Created and pushed to: github.com/$(gh api user -q '.login')/${REPO_NAME}"
         fi
+      else
+        warn "GitHub CLI not authenticated — skipping remote repo setup."
+        warn "Vault will work locally. Run 'gh auth login' then re-run for sync."
       fi
-    else
-      warn "GitHub CLI not authenticated — skipping remote repo setup."
-      warn "Vault will work locally. Run 'gh auth login' then re-run for sync."
-    fi
-
-    cd "$SCRIPT_DIR"
+    ) || { err "Git/GitHub setup failed. Check the output above."; exit 1; }
   else
     dry "cd '$VAULT_PATH' && git init -b main"
     dry "gh repo create '$REPO_NAME' --private --source=. --push"
@@ -406,10 +449,23 @@ Initialized Obsidian vault with:
       local skill_name
       skill_name=$(basename "$skill_dir")
       if [[ -d "${CLAUDE_DIR}/skills/${skill_name}" ]]; then
-        warn "Skill already exists, skipping: ${skill_name}"
+        # Check if the installed skill has a different VAULT_PATH baked in
+        local installed_skill="${CLAUDE_DIR}/skills/${skill_name}/SKILL.md"
+        if [[ -f "$installed_skill" ]] && ! grep -qF "$VAULT_PATH" "$installed_skill" 2>/dev/null && grep -q "obsidian-vault" "$installed_skill" 2>/dev/null; then
+          warn "Skill ${skill_name} exists but may reference a different vault path."
+          warn "To update: rm -rf '${CLAUDE_DIR}/skills/${skill_name}' and re-run."
+        else
+          warn "Skill already exists, skipping: ${skill_name}"
+        fi
       else
         run_cmd "mkdir -p '${CLAUDE_DIR}/skills/${skill_name}'"
-        run_cmd "cp '${skill_dir}/SKILL.md' '${CLAUDE_DIR}/skills/${skill_name}/SKILL.md'"
+        # Expand $VAULT_PATH at install time — skill files are static text, not shell scripts
+        if ! $DRY_RUN; then
+          sed "s|\$VAULT_PATH|${VAULT_PATH}|g" "${skill_dir}/SKILL.md" \
+            > "${CLAUDE_DIR}/skills/${skill_name}/SKILL.md"
+        else
+          dry "Install skill: ${skill_name} (expanding VAULT_PATH=${VAULT_PATH})"
+        fi
         ok "Installed skill: ${skill_name}"
       fi
     done
@@ -432,19 +488,20 @@ Initialized Obsidian vault with:
     else
       # Use node to safely merge the hook into settings.json
       if command -v node >/dev/null 2>&1; then
-        node -e "
+        # Pass values via env vars to avoid injecting shell variables into JS source
+        HESOYAM_SETTINGS_FILE="$settings_file" HESOYAM_HOOK_CMD="$hook_script" node -e "
           const fs = require('fs');
-          const path = '${settings_file}';
+          const path = process.env.HESOYAM_SETTINGS_FILE;
+          const hookCmd = process.env.HESOYAM_HOOK_CMD;
           let settings = {};
           try { settings = JSON.parse(fs.readFileSync(path, 'utf8')); } catch(e) {}
           if (!settings.hooks) settings.hooks = {};
           if (!settings.hooks.PostToolUse) settings.hooks.PostToolUse = [];
-          // Check if vault hook already exists
           const exists = settings.hooks.PostToolUse.some(h => h.matcher === 'Write|Edit' && h.hooks && h.hooks.some(k => k.command && k.command.includes('vault')));
           if (!exists) {
             settings.hooks.PostToolUse.push({
               matcher: 'Write|Edit',
-              hooks: [{ type: 'command', command: \"${hook_script}\" }]
+              hooks: [{ type: 'command', command: hookCmd }]
             });
           }
           fs.writeFileSync(path, JSON.stringify(settings, null, 2) + '\n');
@@ -494,7 +551,10 @@ install_discovery() {
 
   local bookmarks_file="${CLAUDE_DIR}/ecosystem-bookmarks.md"
   if ! $DRY_RUN; then
-    cat > "$bookmarks_file" << 'BOOKMARKS'
+    if [[ -f "$bookmarks_file" ]]; then
+      warn "Ecosystem bookmarks already exist, skipping: $bookmarks_file"
+    else
+      cat > "$bookmarks_file" << 'BOOKMARKS'
 # Ecosystem Bookmarks
 
 ## Core Catalogs
@@ -516,7 +576,8 @@ install_discovery() {
 - claudesidian: https://github.com/heyitsnoah/claudesidian
 - notebooklm-py: https://github.com/teng-lin/notebooklm-py
 BOOKMARKS
-    ok "Saved ecosystem bookmarks to: $bookmarks_file"
+      ok "Saved ecosystem bookmarks to: $bookmarks_file"
+    fi
   else
     dry "Create $bookmarks_file"
   fi
@@ -535,58 +596,62 @@ verify_installation() {
   for skill in promote-to-vault daily-standup research-sprint ecosystem-check; do
     if [[ -f "${CLAUDE_DIR}/skills/${skill}/SKILL.md" ]]; then
       ok "Skill OK: /$(echo $skill)"
-      ((pass++))
+      pass=$((pass + 1))
     elif [[ -f "${CLAUDE_DIR}/skills/${skill}.md" ]]; then
       warn "Skill ${skill} uses old flat format — migrating to directory structure..."
-      mkdir -p "${CLAUDE_DIR}/skills/${skill}"
-      mv "${CLAUDE_DIR}/skills/${skill}.md" "${CLAUDE_DIR}/skills/${skill}/SKILL.md"
-      ok "Skill migrated: /$(echo $skill)"
-      ((pass++))
+      if ! $DRY_RUN; then
+        mkdir -p "${CLAUDE_DIR}/skills/${skill}"
+        mv "${CLAUDE_DIR}/skills/${skill}.md" "${CLAUDE_DIR}/skills/${skill}/SKILL.md"
+        ok "Skill migrated: /$(echo $skill)"
+      else
+        dry "Migrate skill: ${skill} (flat → directory format)"
+      fi
+      pass=$((pass + 1))
     else
       warn "Skill missing: ${skill}"
-      ((fail++))
+      fail=$((fail + 1))
     fi
   done
 
   # Check oh-my-claudecode
   if claude plugin list 2>/dev/null | grep -q "oh-my-claudecode"; then
     ok "Plugin OK: oh-my-claudecode (registered in plugin system)"
-    ((pass++))
+    pass=$((pass + 1))
   elif command -v oh-my-claudecode >/dev/null 2>&1; then
     warn "oh-my-claudecode installed via npm but not as a Claude Code plugin."
     warn "Skills like /oh-my-claudecode:omc-setup may not work."
     warn "To fix: claude plugin add-marketplace omc --source github --repo Yeachan-Heo/oh-my-claudecode"
     warn "        claude plugin install oh-my-claudecode@omc"
-    ((fail++))
+    fail=$((fail + 1))
   else
     warn "oh-my-claudecode not found."
-    ((fail++))
+    fail=$((fail + 1))
   fi
 
   # Check claude-mem
   if command -v claude-mem >/dev/null 2>&1; then
     ok "Memory OK: claude-mem installed"
-    ((pass++))
+    pass=$((pass + 1))
   else
     warn "claude-mem not found."
-    ((fail++))
+    fail=$((fail + 1))
   fi
 
   # Check vault
   if [[ -d "${VAULT_PATH}/.git" ]]; then
     ok "Vault OK: ${VAULT_PATH} (git initialized)"
-    ((pass++))
+    pass=$((pass + 1))
   else
     warn "Vault not initialized: ${VAULT_PATH}"
-    ((fail++))
+    fail=$((fail + 1))
   fi
 
   # Check hook format in settings.json
   local settings_file="${CLAUDE_DIR}/settings.json"
   if [[ -f "$settings_file" ]] && command -v node >/dev/null 2>&1; then
     local hook_valid
-    hook_valid=$(node -e "
-      const s = JSON.parse(require('fs').readFileSync('${settings_file}', 'utf8'));
+    hook_valid=$(HESOYAM_SETTINGS_FILE="$settings_file" node -e "
+      const s = JSON.parse(require('fs').readFileSync(process.env.HESOYAM_SETTINGS_FILE, 'utf8'));
       const ptu = s.hooks && s.hooks.PostToolUse;
       if (!ptu) { console.log('missing'); process.exit(); }
       const valid = ptu.every(h => h.matcher && Array.isArray(h.hooks));
@@ -594,11 +659,11 @@ verify_installation() {
     " 2>/dev/null)
     if [[ "$hook_valid" == "valid" ]]; then
       ok "Hooks OK: PostToolUse format is valid"
-      ((pass++))
+      pass=$((pass + 1))
     elif [[ "$hook_valid" == "invalid" ]]; then
       warn "PostToolUse hooks use incorrect format (missing 'hooks' array)."
       warn "Claude Code will skip the entire settings.json if hooks are malformed."
-      ((fail++))
+      fail=$((fail + 1))
     else
       info "No PostToolUse hooks configured (OK if knowledge pillar not installed)."
     fi
@@ -627,7 +692,13 @@ post_install_summary() {
   echo "Installed locations:"
   echo "  ⚔️  Skills:      ${CLAUDE_DIR}/skills/"
   echo "  💾 Vault:       ${VAULT_PATH}"
-  echo "  📡 Vault repo:  github.com/$(gh api user -q '.login' 2>/dev/null || echo 'YOUR_USER')/${REPO_NAME}"
+  local _vault_user
+  if ! $DRY_RUN; then
+    _vault_user=$(gh api user -q '.login' 2>/dev/null || echo 'YOUR_USER')
+  else
+    _vault_user='YOUR_USER'
+  fi
+  echo "  📡 Vault repo:  github.com/${_vault_user}/${REPO_NAME}"
   echo "  🗺️  Bookmarks:   ${CLAUDE_DIR}/ecosystem-bookmarks.md"
   echo "  🛡️  ECC:         ${HOME}/.hesoyam/everything-claude-code/"
   echo ""
