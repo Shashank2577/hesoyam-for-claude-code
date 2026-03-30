@@ -252,27 +252,27 @@ install_knowledge() {
   info "━━━ 💾  Pillar IV: Knowledge & Second Brain — The Safe House ━━━"
   echo ""
 
-  # ── Step 1: Vault path + repo name (interactive if not provided via flags) ─
-  if ! $DRY_RUN; then
-    # Ask for vault path if user didn't provide --vault-path
-    if [[ "$VAULT_PATH" == "${HOME}/Documents/obsidian-vault" ]]; then
-      echo -e "  ${BOLD}Obsidian vault path:${NC} [${VAULT_PATH}]"
-      read -r -p "  Press Enter to accept, or type your vault path: " user_vault_path
-      if [[ -n "$user_vault_path" ]]; then
-        # Expand ~ and resolve to absolute path
-        user_vault_path="${user_vault_path/#\~/$HOME}"
-        if [[ -d "$user_vault_path" ]]; then
-          VAULT_PATH="$(cd "$user_vault_path" && pwd)"
-        elif [[ -d "$(dirname "$user_vault_path")" ]]; then
-          VAULT_PATH="$(cd "$(dirname "$user_vault_path")" && pwd)/$(basename "$user_vault_path")"
-        else
-          VAULT_PATH="$user_vault_path"
-        fi
+  # ── Step 1: Vault path + repo name ────────────────────────────────────────
+  # Skip all prompts if vault already exists with git configured
+  if ! $DRY_RUN && [[ -d "${VAULT_PATH}/.git" ]]; then
+    ok "Existing vault detected: ${VAULT_PATH} (git configured)"
+  elif ! $DRY_RUN; then
+    # Vault doesn't exist or has no git — ask for details
+    echo -e "  ${BOLD}Obsidian vault path:${NC} [${VAULT_PATH}]"
+    read -r -p "  Press Enter to accept, or type your vault path: " user_vault_path
+    if [[ -n "$user_vault_path" ]]; then
+      user_vault_path="${user_vault_path/#\~/$HOME}"
+      if [[ -d "$user_vault_path" ]]; then
+        VAULT_PATH="$(cd "$user_vault_path" && pwd)"
+      elif [[ -d "$(dirname "$user_vault_path")" ]]; then
+        VAULT_PATH="$(cd "$(dirname "$user_vault_path")" && pwd)/$(basename "$user_vault_path")"
+      else
+        VAULT_PATH="$user_vault_path"
       fi
-      echo ""
     fi
+    echo ""
 
-    # Only ask for repo name if vault doesn't already have git
+    # Only ask for repo name if vault still doesn't have git
     if [[ ! -d "${VAULT_PATH}/.git" ]]; then
       echo -e "  ${BOLD}Vault GitHub repo name:${NC} [${REPO_NAME}]"
       read -r -p "  Press Enter to accept, or type a new name: " user_repo_name
@@ -281,7 +281,7 @@ install_knowledge() {
       fi
       echo ""
     else
-      ok "Vault already has git — skipping repo setup prompts."
+      ok "Vault already has git — skipping repo setup."
     fi
   fi
 
