@@ -319,20 +319,54 @@ graph LR
 
 ## ⚡ Quick Start
 
-### Option 1: Full Installation (Recommended)
+### Option A: Let Claude Do It (No Commands Required)
+
+Don't want to run scripts? Open Claude Code in this folder and paste this:
+
+```
+I want to set up HESOYAM in this directory. Ask me what I need, recommend a setup, explain it to me plainly, then do it.
+```
+
+Claude will ask you a few questions, recommend the right profile, explain what it's doing, and handle everything. No terminal knowledge needed.
+
+→ [Full conversational setup guide](guides/conversational-setup.md)
+
+---
+
+### Option B: Guided Install (Script)
+
+Run the installer — it will guide you to the right setup:
 
 ```bash
-# Clone the arsenal
 git clone https://github.com/Shashank2577/hesoyam-for-claude-code.git
 cd hesoyam-for-claude-code
+./install.sh
+```
 
+Pick the profile that fits:
+
+| # | Profile | What it installs | Best for |
+|---|---------|-----------------|----------|
+| 1 | **Solo Dev Minimal** | Agents + security hooks | Devs who want better Claude, zero overhead |
+| 2 | **Solo Dev + Memory** | +claude-mem | Solo devs who want session memory |
+| 3 | **Knowledge Worker** | +knowledge base (Obsidian optional) | Writers, architects, researchers |
+| 4 | **Full HESOYAM** | Everything | Power users who want it all |
+
+Or skip the wizard:
+```bash
+./install.sh --profile 1    # minimal
+./install.sh --profile 2    # +memory
+./install.sh --profile 3    # +knowledge
+./install.sh --profile 4    # full
+```
+
+> **Obsidian not required.** Profile 3 and 4 will ask if you use Obsidian. You can use a plain local markdown folder or skip vault setup entirely and just get the skills.
+
+```bash
 # Preview what will be installed (no changes made)
 ./install.sh --dry-run
 
-# Run the unified installer
-./install.sh
-
-# Or install pillar by pillar
+# Or install pillar by pillar (legacy)
 ./install.sh --pillar orchestration
 ./install.sh --pillar config
 ./install.sh --pillar memory

@@ -12,6 +12,9 @@ VAULT_PATH="${HOME}/Documents/obsidian-vault"
 REPO_NAME="obsidian-vault"
 CLAUDE_DIR="${HOME}/.claude"
 PILLAR=""
+PROFILE=""           # Setup profile: solo-minimal, solo-memory, knowledge-worker, full
+OBSIDIAN_MODE=""     # Vault mode: yes | no | skip
+HAS_GITHUB=""        # GitHub available: yes | no
 
 # ─── Colors ──────────────────────────────────────────────────────────────────
 RED='\033[0;31m'
@@ -114,6 +117,9 @@ while [[ $# -gt 0 ]]; do
       fi
       unset _vp
       shift 2 ;;
+    --profile)
+      [[ $# -ge 2 ]] || { err "--profile requires an argument"; exit 1; }
+      PROFILE="$2"; shift 2 ;;
     --repo-name)
       [[ $# -ge 2 ]] || { err "--repo-name requires an argument"; exit 1; }
       REPO_NAME="$2"; shift 2 ;;
@@ -122,6 +128,8 @@ while [[ $# -gt 0 ]]; do
       echo ""
       echo "Options:"
       echo "  --pillar NAME     Install a specific pillar (orchestration|config|memory|knowledge|discovery)"
+      echo "  --profile NAME     Setup profile: solo-minimal (1), solo-memory (2),"
+      echo "                     knowledge-worker (3), full (4)"
       echo "  --dry-run         Show what would be done without making changes"
       echo "  --vault-path PATH Set Obsidian vault path (default: ~/Documents/obsidian-vault)"
       echo "  --repo-name NAME  Set GitHub repo name for vault (default: obsidian-vault)"
@@ -288,6 +296,40 @@ install_memory() {
   ok "Memory pillar installed."
 }
 
+# ─── Skills Installer (extracted from Knowledge pillar) ───────────────────
+install_skills_only() {
+  run_cmd "mkdir -p '${CLAUDE_DIR}/skills'"
+
+  if [[ -d "${SCRIPT_DIR}/.claude/skills" ]]; then
+    for skill_dir in "${SCRIPT_DIR}"/.claude/skills/*/; do
+      [[ -d "$skill_dir" ]] || continue
+      [[ -f "${skill_dir}/SKILL.md" ]] || continue
+      local skill_name
+      skill_name=$(basename "$skill_dir")
+      if [[ -d "${CLAUDE_DIR}/skills/${skill_name}" ]]; then
+        # Check if the installed skill has a different VAULT_PATH baked in
+        local installed_skill="${CLAUDE_DIR}/skills/${skill_name}/SKILL.md"
+        if [[ -f "$installed_skill" ]] && ! grep -qF "$VAULT_PATH" "$installed_skill" 2>/dev/null && grep -q "obsidian-vault" "$installed_skill" 2>/dev/null; then
+          warn "Skill ${skill_name} exists but may reference a different vault path."
+          warn "To update: rm -rf '${CLAUDE_DIR}/skills/${skill_name}' and re-run."
+        else
+          warn "Skill already exists, skipping: ${skill_name}"
+        fi
+      else
+        run_cmd "mkdir -p '${CLAUDE_DIR}/skills/${skill_name}'"
+        # Expand $VAULT_PATH at install time — skill files are static text, not shell scripts
+        if ! $DRY_RUN; then
+          sed "s|\$VAULT_PATH|${VAULT_PATH}|g" "${skill_dir}/SKILL.md" \
+            > "${CLAUDE_DIR}/skills/${skill_name}/SKILL.md"
+        else
+          dry "Install skill: ${skill_name} (expanding VAULT_PATH=${VAULT_PATH})"
+        fi
+        ok "Installed skill: ${skill_name}"
+      fi
+    done
+  fi
+}
+
 # ─── Pillar IV: Knowledge & Second Brain ────────────────────────────────────
 install_knowledge() {
   info "━━━ 💾  Pillar IV: Knowledge & Second Brain — The Safe House ━━━"
@@ -326,28 +368,47 @@ install_knowledge() {
     fi
   fi
 
-  # ── Step 2: Create vault from template ────────────────────────────────────
-  info "Step 1/6: Creating vault at ${VAULT_PATH}"
-  if [[ -d "$VAULT_PATH" ]]; then
-    ok "Using existing vault: $VAULT_PATH"
-  else
-    # Use direct cp (not run_cmd/eval) — VAULT_PATH is user-controlled and must not be eval'd
-    if ! $DRY_RUN; then
-      cp -r "${SCRIPT_DIR}/knowledge/obsidian-vault-template" "$VAULT_PATH"
-    else
-      dry "cp -r '${SCRIPT_DIR}/knowledge/obsidian-vault-template' '${VAULT_PATH}'"
-    fi
-    ok "Vault created with PARA structure."
+  # Determine vault mode if not set by wizard or --profile flag
+  if [[ -z "$OBSIDIAN_MODE" ]] && ! $DRY_RUN; then
+    echo ""
+    echo -e "  ${BOLD}Knowledge base mode:${NC}"
+    echo "  [y] Full Obsidian setup (git + GitHub sync)"
+    echo "  [n] Plain markdown folder (local only)"
+    echo "  [s] Skills only (skip vault creation)"
+    local obs_input
+    read -r -p "  Vault mode? [y/N/s]: " obs_input
+    case "$obs_input" in
+      y|Y) OBSIDIAN_MODE="yes" ;;
+      s|S) OBSIDIAN_MODE="skip" ;;
+      *)   OBSIDIAN_MODE="no" ;;
+    esac
   fi
+  # Dry-run default
+  [[ -z "$OBSIDIAN_MODE" ]] && OBSIDIAN_MODE="yes"
 
-  # ── Step 3: Create .gitignore ─────────────────────────────────────────────
-  info "Step 2/6: Creating vault .gitignore"
-  local gitignore_path="${VAULT_PATH}/.gitignore"
-  if [[ -f "$gitignore_path" ]]; then
-    warn ".gitignore already exists in vault, skipping."
-  else
-    if ! $DRY_RUN; then
-      cat > "$gitignore_path" << 'GITIGNORE'
+  if [[ "$OBSIDIAN_MODE" != "skip" ]]; then
+    # ── Step 2: Create vault from template ────────────────────────────────────
+    info "Step 1/6: Creating vault at ${VAULT_PATH}"
+    if [[ -d "$VAULT_PATH" ]]; then
+      ok "Using existing vault: $VAULT_PATH"
+    else
+      # Use direct cp (not run_cmd/eval) — VAULT_PATH is user-controlled and must not be eval'd
+      if ! $DRY_RUN; then
+        cp -r "${SCRIPT_DIR}/knowledge/obsidian-vault-template" "$VAULT_PATH"
+      else
+        dry "cp -r '${SCRIPT_DIR}/knowledge/obsidian-vault-template' '${VAULT_PATH}'"
+      fi
+      ok "Vault created with PARA structure."
+    fi
+
+    # ── Step 3: Create .gitignore ─────────────────────────────────────────────
+    info "Step 2/6: Creating vault .gitignore"
+    local gitignore_path="${VAULT_PATH}/.gitignore"
+    if [[ -f "$gitignore_path" ]]; then
+      warn ".gitignore already exists in vault, skipping."
+    else
+      if ! $DRY_RUN; then
+        cat > "$gitignore_path" << 'GITIGNORE'
 # Obsidian workspace (local to each device)
 .obsidian/workspace.json
 .obsidian/workspace-mobile.json
@@ -369,110 +430,93 @@ Thumbs.db
 .claude-mem/
 *.mv2
 GITIGNORE
-      ok "Created .gitignore"
-    else
-      dry "Create ${gitignore_path}"
-    fi
-  fi
-
-  # ── Step 4: Git init + GitHub repo ────────────────────────────────────────
-  info "Step 3/6: Setting up Git repo (${REPO_NAME})"
-
-  if ! $DRY_RUN; then
-    # Use subshell so cd never leaks — parent cwd stays at SCRIPT_DIR
-    (
-      cd "$VAULT_PATH"
-
-      # Init git if not already
-      if [[ ! -d ".git" ]]; then
-        # -b flag requires git >= 2.28; fall back for older systems (e.g. Ubuntu 20.04)
-        if git init -b main 2>/dev/null; then
-          :
-        else
-          git init
-          git symbolic-ref HEAD refs/heads/main
-        fi
-        ok "Initialized git repository."
+        ok "Created .gitignore"
       else
-        ok "Git already initialized."
+        dry "Create ${gitignore_path}"
       fi
+    fi
 
-      # GitHub remote setup (requires gh auth)
-      if gh auth status &>/dev/null; then
-        local _gh_user
-        _gh_user=$(gh api user -q '.login' 2>/dev/null || echo "")
-        local _qualified_repo="${_gh_user:+${_gh_user}/}${REPO_NAME}"
-        if gh repo view "$_qualified_repo" &>/dev/null; then
-          ok "GitHub repo '${_qualified_repo}' already exists."
-          # Ensure remote is set
-          if ! git remote get-url origin &>/dev/null; then
-            repo_url=$(gh repo view "$_qualified_repo" --json url -q '.url')
-            git remote add origin "$repo_url"
-            ok "Set remote origin to: $repo_url"
+    if [[ "$OBSIDIAN_MODE" == "yes" ]]; then
+      # ── Step 4: Git init + GitHub repo ────────────────────────────────────────
+      info "Step 3/6: Setting up Git repo (${REPO_NAME})"
+
+      if ! $DRY_RUN; then
+        # Use subshell so cd never leaks — parent cwd stays at SCRIPT_DIR
+        (
+          cd "$VAULT_PATH"
+
+          # Init git if not already
+          if [[ ! -d ".git" ]]; then
+            # -b flag requires git >= 2.28; fall back for older systems (e.g. Ubuntu 20.04)
+            if git init -b main 2>/dev/null; then
+              :
+            else
+              git init
+              git symbolic-ref HEAD refs/heads/main
+            fi
+            ok "Initialized git repository."
           else
-            ok "Remote origin already configured."
+            ok "Git already initialized."
           fi
-          # Push any local commits not yet on remote
-          GIT_TERMINAL_PROMPT=0 git push -u origin main 2>/dev/null || \
-            warn "Push failed — run 'git push -u origin main' manually after configuring credentials."
-        else
-          info "Creating private GitHub repo: ${REPO_NAME}"
-          git add -A
-          git commit -m "vault: HESOYAM initial setup — PARA structure, templates, .gitignore
+
+          if [[ "$HAS_GITHUB" != "no" ]]; then
+            # GitHub remote setup (requires gh auth)
+            if gh auth status &>/dev/null; then
+              local _gh_user
+              _gh_user=$(gh api user -q '.login' 2>/dev/null || echo "")
+              local _qualified_repo="${_gh_user:+${_gh_user}/}${REPO_NAME}"
+              if gh repo view "$_qualified_repo" &>/dev/null; then
+                ok "GitHub repo '${_qualified_repo}' already exists."
+                # Ensure remote is set
+                if ! git remote get-url origin &>/dev/null; then
+                  repo_url=$(gh repo view "$_qualified_repo" --json url -q '.url')
+                  git remote add origin "$repo_url"
+                  ok "Set remote origin to: $repo_url"
+                else
+                  ok "Remote origin already configured."
+                fi
+                # Push any local commits not yet on remote
+                GIT_TERMINAL_PROMPT=0 git push -u origin main 2>/dev/null || \
+                  warn "Push failed — run 'git push -u origin main' manually after configuring credentials."
+              else
+                info "Creating private GitHub repo: ${REPO_NAME}"
+                git add -A
+                git commit -m "vault: HESOYAM initial setup — PARA structure, templates, .gitignore
 
 Initialized Obsidian vault with:
 - PARA folders: Inbox, Projects, Areas, Resources, Archive
 - Templates: decision-record, debug-journal, daily-note, meeting-notes
 - Git-backed auto-sync via Claude Code PostToolUse hook
 - Ready for Obsidian desktop/mobile" --allow-empty
-          gh repo create "$REPO_NAME" --private --source=. --push
-          ok "Created and pushed to: github.com/$(gh api user -q '.login')/${REPO_NAME}"
-        fi
+                gh repo create "$REPO_NAME" --private --source=. --push
+                ok "Created and pushed to: github.com/$(gh api user -q '.login')/${REPO_NAME}"
+              fi
+            else
+              warn "GitHub CLI not authenticated — skipping remote repo setup."
+              warn "Vault will work locally. Run 'gh auth login' then re-run for sync."
+            fi
+          else
+            info "HAS_GITHUB=no — skipping GitHub remote setup. Vault is local-only."
+          fi
+        ) || { err "Git/GitHub setup failed. Check the output above."; exit 1; }
       else
-        warn "GitHub CLI not authenticated — skipping remote repo setup."
-        warn "Vault will work locally. Run 'gh auth login' then re-run for sync."
+        dry "cd '$VAULT_PATH' && git init -b main"
+        dry "gh repo create '$REPO_NAME' --private --source=. --push"
       fi
-    ) || { err "Git/GitHub setup failed. Check the output above."; exit 1; }
+    else
+      info "Step 3/6: Skipping git/GitHub setup (plain markdown mode)."
+    fi
   else
-    dry "cd '$VAULT_PATH' && git init -b main"
-    dry "gh repo create '$REPO_NAME' --private --source=. --push"
+    info "Skills-only mode — skipping vault creation (Steps 1-3)."
   fi
 
   # ── Step 5: Install skills globally ───────────────────────────────────────
   info "Step 4/6: Installing HESOYAM skills to ${CLAUDE_DIR}/skills/"
-  run_cmd "mkdir -p '${CLAUDE_DIR}/skills'"
+  install_skills_only
 
-  if [[ -d "${SCRIPT_DIR}/.claude/skills" ]]; then
-    for skill_dir in "${SCRIPT_DIR}"/.claude/skills/*/; do
-      [[ -d "$skill_dir" ]] || continue
-      [[ -f "${skill_dir}/SKILL.md" ]] || continue
-      local skill_name
-      skill_name=$(basename "$skill_dir")
-      if [[ -d "${CLAUDE_DIR}/skills/${skill_name}" ]]; then
-        # Check if the installed skill has a different VAULT_PATH baked in
-        local installed_skill="${CLAUDE_DIR}/skills/${skill_name}/SKILL.md"
-        if [[ -f "$installed_skill" ]] && ! grep -qF "$VAULT_PATH" "$installed_skill" 2>/dev/null && grep -q "obsidian-vault" "$installed_skill" 2>/dev/null; then
-          warn "Skill ${skill_name} exists but may reference a different vault path."
-          warn "To update: rm -rf '${CLAUDE_DIR}/skills/${skill_name}' and re-run."
-        else
-          warn "Skill already exists, skipping: ${skill_name}"
-        fi
-      else
-        run_cmd "mkdir -p '${CLAUDE_DIR}/skills/${skill_name}'"
-        # Expand $VAULT_PATH at install time — skill files are static text, not shell scripts
-        if ! $DRY_RUN; then
-          sed "s|\$VAULT_PATH|${VAULT_PATH}|g" "${skill_dir}/SKILL.md" \
-            > "${CLAUDE_DIR}/skills/${skill_name}/SKILL.md"
-        else
-          dry "Install skill: ${skill_name} (expanding VAULT_PATH=${VAULT_PATH})"
-        fi
-        ok "Installed skill: ${skill_name}"
-      fi
-    done
-  fi
-
-  # ── Step 6: Add auto-sync hook to Claude Code settings ───────────────────
-  info "Step 5/6: Configuring vault auto-sync hook"
+  if [[ "$OBSIDIAN_MODE" == "yes" ]]; then
+    # ── Step 6: Add auto-sync hook to Claude Code settings ───────────────────
+    info "Step 5/6: Configuring vault auto-sync hook"
   local settings_file="${CLAUDE_DIR}/settings.json"
   local hook_script="cd '${VAULT_PATH}' && git add -A && git diff --cached --quiet || (git commit -m 'vault: auto-sync' && git push 2>/dev/null &)"
 
@@ -533,6 +577,10 @@ Initialized Obsidian vault with:
   else
     warn "Obsidian not detected. Install from https://obsidian.md"
     echo "  After installing: Open Obsidian → 'Open folder as vault' → ${VAULT_PATH}"
+  fi
+  else
+    info "Step 5/6: Skipping auto-sync hook (not in Obsidian mode)."
+    info "Step 6/6: Skipping Obsidian detection (not in Obsidian mode)."
   fi
 
   echo ""
@@ -718,6 +766,103 @@ post_install_summary() {
   fi
 }
 
+# ─── Setup Wizard ────────────────────────────────────────────────────────────
+run_wizard() {
+  echo ""
+  echo -e "${BOLD}  Which setup profile fits you?${NC}"
+  echo ""
+  echo -e "  ${BOLD}1  Solo Dev Minimal${NC}"
+  echo "     Better agents, security hooks, and config. No extra infrastructure."
+  echo "     Installs: Orchestration + Config  |  Time: ~15 min"
+  echo ""
+  echo -e "  ${BOLD}2  Solo Dev + Memory${NC}"
+  echo "     Everything in 1, plus Claude remembers context across sessions."
+  echo "     Installs: +claude-mem  |  Time: ~20 min"
+  echo ""
+  echo -e "  ${BOLD}3  Knowledge Worker${NC}"
+  echo "     Everything in 2, plus a searchable knowledge base."
+  echo "     Obsidian optional — works as a plain markdown folder too."
+  echo "     Installs: +Knowledge base  |  Time: ~30 min"
+  echo ""
+  echo -e "  ${BOLD}4  Full HESOYAM${NC}"
+  echo "     Everything. NotebookLM SME, ecosystem discovery, all upstream tools."
+  echo "     Installs: All five pillars  |  Time: ~45 min"
+  echo ""
+  local profile_choice
+  read -r -p "  Enter profile number [1-4, default: 2]: " profile_choice
+  profile_choice="${profile_choice:-2}"
+
+  case "$profile_choice" in
+    1|solo-minimal)    PROFILE="solo-minimal" ;;
+    2|solo-memory)     PROFILE="solo-memory" ;;
+    3|knowledge-worker) PROFILE="knowledge-worker" ;;
+    4|full)            PROFILE="full" ;;
+    *)
+      err "Invalid choice '$profile_choice'. Valid: 1, 2, 3, 4"
+      exit 1 ;;
+  esac
+
+  # Profile 3 and 4: ask about Obsidian and GitHub
+  if [[ "$PROFILE" == "knowledge-worker" || "$PROFILE" == "full" ]]; then
+    echo ""
+    echo -e "  ${BOLD}Knowledge base setup:${NC}"
+    echo "  [y] Full Obsidian — git-backed, GitHub-synced, phone-accessible"
+    echo "  [n] Plain markdown folder — local only, no git required"
+    echo "  [s] Skills only — just install the Claude Code skills"
+    local obs_choice
+    read -r -p "  Do you use Obsidian? [y/N/s]: " obs_choice
+    case "$obs_choice" in
+      y|Y) OBSIDIAN_MODE="yes"
+           echo ""
+           local gh_choice
+           read -r -p "  Do you have a GitHub account for vault sync? [Y/n]: " gh_choice
+           gh_choice="${gh_choice:-y}"
+           case "$gh_choice" in
+             n|N) HAS_GITHUB="no"
+                  warn "Vault will be local-only (no git push)." ;;
+             *)   HAS_GITHUB="yes" ;;
+           esac ;;
+      s|S) OBSIDIAN_MODE="skip"
+           info "Skills-only mode: vault folder creation skipped." ;;
+      *)   OBSIDIAN_MODE="no"
+           info "Plain markdown folder will be created at: $VAULT_PATH" ;;
+    esac
+  fi
+
+  echo ""
+  info "Profile: ${PROFILE}"
+  [[ -n "$OBSIDIAN_MODE" ]] && info "Vault mode: ${OBSIDIAN_MODE}"
+  echo ""
+}
+
+# ─── Profile Runner ───────────────────────────────────────────────────────────
+run_profile() {
+  case "$PROFILE" in
+    solo-minimal|1)
+      install_orchestration
+      install_config ;;
+    solo-memory|2)
+      install_orchestration
+      install_config
+      install_memory ;;
+    knowledge-worker|3)
+      install_orchestration
+      install_config
+      install_memory
+      install_knowledge ;;
+    full|4)
+      install_orchestration
+      install_config
+      install_memory
+      install_knowledge
+      install_discovery ;;
+    *)
+      err "Unknown profile: ${PROFILE}"
+      err "Valid: solo-minimal (1), solo-memory (2), knowledge-worker (3), full (4)"
+      exit 1 ;;
+  esac
+}
+
 # ─── Main ───────────────────────────────────────────────────────────────────
 main() {
   show_banner
@@ -730,6 +875,7 @@ main() {
   check_prerequisites
 
   if [[ -n "$PILLAR" ]]; then
+    # Legacy --pillar mode
     case "$PILLAR" in
       orchestration) install_orchestration ;;
       config)        install_config ;;
@@ -738,16 +884,20 @@ main() {
       discovery)     install_discovery ;;
       *)
         err "Unknown pillar: $PILLAR"
-        err "Valid pillars: orchestration, config, memory, knowledge, discovery"
+        err "Valid: orchestration, config, memory, knowledge, discovery"
         exit 1
         ;;
     esac
   else
-    install_orchestration
-    install_config
-    install_memory
-    install_knowledge
-    install_discovery
+    # Profile mode (with or without wizard)
+    if [[ -z "$PROFILE" ]]; then
+      run_wizard
+    elif [[ "$PROFILE" =~ ^(knowledge-worker|full|3|4)$ ]] && [[ -z "$OBSIDIAN_MODE" ]]; then
+      # --profile flag used but no vault mode specified: default to full Obsidian + GitHub
+      OBSIDIAN_MODE="yes"
+      HAS_GITHUB="yes"
+    fi
+    run_profile
   fi
 
   if ! $DRY_RUN; then
